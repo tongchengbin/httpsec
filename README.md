@@ -14,8 +14,8 @@ http://localhost/?doAs=`whoami`
 ### Send Irregular URL
 ```
 >>> import httpsec
->>> from httpsec import URL
->>> r = httpsec.get(URL(host="testpoc.com",scheme="https",path="./../../",query="doAs=`whoami`"))
+>>> from httpsec import SafeURL
+>>> r = httpsec.get(SafeURL(host="testpoc.com",scheme="https",path="./../../",query="doAs=`whoami`"))
 >>> r.status_code
 200
 >>> r.headers['content-type']

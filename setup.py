@@ -11,7 +11,7 @@ with open("README.md", "r", encoding="utf-8") as f:
     readme = f.read()
 
 requires = [
-    "urllib3>=1.21.1,<1.27",
+    "urllib3>=1.21.1",
 ]
 setup(
     name=about["__title__"],
