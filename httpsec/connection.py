@@ -22,7 +22,8 @@ class HttpConnection(HTTPConnection):
         setattr(response, "request_body_bytes", self.request_body_bytes)
         return response
 
-
+    def _validate_path(self, url):
+        return
 
 
 class HttpsConnection(HttpConnection, HTTPSConnection):

@@ -32,7 +32,7 @@ class HttpManager(PoolManager, RequestMethods):
         :param kw:
         :return:
         """
-        if isinstance(url, URL):
+        if issubclass(URL, url.__class__) or isinstance(url, URL):
             parsed = url
         else:
             parsed = parse_url(url)
@@ -54,8 +54,9 @@ class HttpManager(PoolManager, RequestMethods):
         conn = self.connection_from_host(parsed.host, port=parsed.port, scheme=parsed.scheme, **kw)
         kw["assert_same_host"] = False
         kw["redirect"] = False
+        kw["scheme"] = parsed.scheme
         if proxy:
-            response = conn.urlopen(method, url, **kw)
+            response = conn.urlopen(method, parsed, **kw)
         else:
             response = conn.urlopen(method, parsed.request_uri, **kw)
 

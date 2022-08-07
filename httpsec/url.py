@@ -31,7 +31,6 @@ class URL(object):
         if path is not None:
             self.path = path
 
-        print(2222222, self.auth)
         if self.fragment is not None:
             self.fragment = fragment
 
@@ -48,7 +47,7 @@ class URL(object):
             uri += "/"
         else:
             uri += self.path
-        if self.query is not None:
+        if self.query:
             uri += "?" + self.query
         return uri
 
@@ -66,7 +65,6 @@ class URL(object):
         # We use "is not None" we want things to happen with empty strings (or 0 port)
         if self.scheme is not None:
             uri += self.scheme + u"://"
-        print(11111111111, self.auth)
         if self.auth is not None:
             uri += self.auth + u"@"
         if self.host is not None:
