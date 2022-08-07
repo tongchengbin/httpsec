@@ -131,7 +131,6 @@ class HttpConnectionPool(HTTPConnectionPool):
             Additional parameters are passed to
             :meth:`urllib3.response.HTTPResponse.from_httplib`
         """
-
         destination_scheme = response_kw.get('scheme')
 
         if headers is None:

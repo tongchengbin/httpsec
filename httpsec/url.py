@@ -80,6 +80,16 @@ class URL(object):
     def __str__(self):
         return self.url
 
+    @property
+    def base_url(self):
+        if self.port:
+            return f"{self.scheme}://{self.host}:{self.port}"
+        else:
+            return f"{self.scheme}://{self.host}"
+
+    def lower(self):
+        return self.base_url.lower()
+
 
 class SafeURL(URL):
     pass
