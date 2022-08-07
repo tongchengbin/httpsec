@@ -1,5 +1,4 @@
 from urllib3.connection import HTTPConnection, HTTPSConnection
-from http import client
 from httpsec.httpclient import HTTPClientResponse
 
 
@@ -24,5 +23,7 @@ class HttpConnection(HTTPConnection):
         return response
 
 
-class HttpsConnection(HttpConnection,HTTPSConnection):
+
+
+class HttpsConnection(HttpConnection, HTTPSConnection):
     pass

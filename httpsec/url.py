@@ -1,30 +1,39 @@
-from collections import namedtuple
-from urllib3.util import Url
+import urllib.parse
+
 from urllib3.util.url import url_attrs
 
 
-class UnSafeUrl(namedtuple("Url", url_attrs)):
-    """
-    Data structure for representing an HTTP URL. Used as a return value for
-    :func:`parse_url`. Both the scheme and host are normalized as they are
-    both case-insensitive according to RFC 3986.
-    """
+class URL(object):
+    __slots__ = url_attrs
 
-    __slots__ = ()
+    def __init__(self, base_url=None, scheme=None, auth=None, host=None, query=None, port=None, path=None,
+                 fragment=None):
+        self.auth = self.scheme = self.host = self.port = self.query = self.path = None
+        if base_url:
+            parsed = urllib.parse.urlparse(base_url)
+            self.scheme = parsed.scheme
+            self.path = parsed.path
+            self.port = parsed.port
+            self.host = parsed.hostname
+            self.fragment = parsed.fragment
+            self.query = parsed.query
 
-    def __new__(
-        cls,
-        scheme=None,
-        auth=None,
-        host=None,
-        port=None,
-        path=None,
-        query=None,
-        fragment=None,
-    ):
-        return super(UnSafeUrl, cls).__new__(
-            cls, scheme, auth, host, port, path, query, fragment
-        )
+        if scheme:
+            self.scheme = scheme
+        if auth is not None:
+            self.auth = auth
+        if host is not None:
+            self.host = host
+        if query is not None:
+            self.query = query
+        if port is not None:
+            self.port = port
+        if path is not None:
+            self.path = path
+
+        print(2222222,self.auth)
+        if self.fragment is not None:
+            self.fragment = fragment
 
     @property
     def hostname(self):
@@ -34,10 +43,13 @@ class UnSafeUrl(namedtuple("Url", url_attrs)):
     @property
     def request_uri(self):
         """Absolute path including the query string."""
-        uri = self.path or "/"
+        uri = ""
+        if self.path is None:
+            uri += "/"
+        else:
+            uri += self.path
         if self.query is not None:
             uri += "?" + self.query
-
         return uri
 
     @property
@@ -49,44 +61,23 @@ class UnSafeUrl(namedtuple("Url", url_attrs)):
 
     @property
     def url(self):
-        """
-        Convert self into a url
-
-        This function should more or less round-trip with :func:`.parse_url`. The
-        returned url may not be exactly the same as the url inputted to
-        :func:`.parse_url`, but it should be equivalent by the RFC (e.g., urls
-        with a blank port will have : removed).
-
-        Example: ::
-
-            >>> U = parse_url('http://google.com/mail/')
-            >>> U.url
-            'http://google.com/mail/'
-            >>> Url('http', 'username:password', 'host.com', 80,
-            ... '/path', 'query', 'fragment').url
-            'http://username:password@host.com:80/path?query#fragment'
-        """
-        scheme, auth, host, port, path, query, fragment = self
-        url = u""
+        uri = u""
 
         # We use "is not None" we want things to happen with empty strings (or 0 port)
-        if scheme is not None:
-            url += scheme + u"://"
-        if auth is not None:
-            url += auth + u"@"
-        if host is not None:
-            url += host
-        if port is not None:
-            url += u":" + str(port)
-        if path is not None:
-            url += path
-        if query is not None:
-            url += u"?" + query
-        if fragment is not None:
-            url += u"#" + fragment
+        if self.scheme is not None:
+            uri += self.scheme + u"://"
+        print(11111111111,self.auth)
+        if self.auth is not None:
+            uri += self.auth + u"@"
+        if self.host is not None:
+            uri += self.host
+        if self.port is not None:
+            uri += u":" + str(self.port)
+        uri += self.request_uri
+        if self.fragment is not None:
+            uri += u"#" + self.fragment
 
-        return url
+        return uri
 
     def __str__(self):
         return self.url
-

@@ -33,12 +33,19 @@ class Response(HTTPResponse):
                          original_response=original_response, pool=pool, connection=connection, retries=retries,
                          msg=msg,
                          enforce_content_length=enforce_content_length, request_method=request_method)
-        self.status = status
+        self.status_code = self.status
         self.version = version
         self.reason = reason
         self.auto_close = auto_close
         self.request_url = request_url
 
     @property
+    def text(self):
+        return self.data.decode()
+
+    @property
     def content(self):
         return self.data
+
+    def __str__(self):
+        return "status <%d>" % self.status_code

@@ -11,5 +11,20 @@ http://localhost/?doAs=`whoami`
 
 
 
-### Coding
+### Send Irregular URL
+```
+>>> import httpsec
+>>> from httpsec import UnSafeUrl
+>>> r = httpsec.get(UnSafeUrl(host="testpoc.com",scheme="https",path="./../../",query="doAs=`whoami`"))
+>>> r.status_code
+200
+>>> r.headers['content-type']
+'application/json; charset=utf8'
+>>> r.encoding
+'utf-8'
+>>> r.text
+'{"authenticated": true, ...'
+>>> r.json()
+{'authenticated': True, ...}
+```
 
