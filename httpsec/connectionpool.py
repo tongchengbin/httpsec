@@ -386,3 +386,5 @@ class HttpConnectionPool(HTTPConnectionPool):
 
 class HttpsConnectionPool(HttpConnectionPool, HTTPSConnectionPool):
     ResponseCls = Response
+
+

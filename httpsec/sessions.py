@@ -10,6 +10,7 @@ from collections import OrderedDict
 from datetime import timedelta
 from urllib.parse import urlparse
 
+from requests import PreparedRequest
 from requests.exceptions import InvalidSchema
 
 from httpsec.adapters import HTTPAdapter
@@ -589,7 +590,10 @@ class Session(SessionRedirectMixin):
         elif not isinstance(timeout,tuple):
             raise ValueError("Timeout must be tuple or int ")
         # 这里可以判断是否需要使用代理
-        response = self.adapter.send(method, url=url, proxy=proxy, timeout=timeout)
+        request = PreparedRequest()
+        request.url = url
+        request.method = method
+        response = self.adapter.send(request, proxy=proxy, timeout=timeout)
         return response
 
 
