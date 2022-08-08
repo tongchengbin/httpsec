@@ -2,10 +2,9 @@ import datetime
 from collections import OrderedDict
 
 import chardet
-from httpcore import ProtocolError
 from requests.exceptions import ChunkedEncodingError, ContentDecodingError, SSLError, StreamConsumedError
 from requests.utils import iter_slices, stream_decode_response_unicode
-from urllib3.exceptions import DecodeError, ReadTimeoutError
+from urllib3.exceptions import DecodeError, ReadTimeoutError, ProtocolError
 
 from httpsec.httpclient import HTTPResponse
 
