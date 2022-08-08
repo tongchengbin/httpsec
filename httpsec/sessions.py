@@ -424,6 +424,7 @@ class Session(SessionRedirectMixin):
             verify=None,
             cert=None,
             json=None,
+            url_encode=True
     ):
         """Constructs a :class:`Request <Request>`, prepares it and sends it.
         Returns :class:`Response <Response>` object.
@@ -467,6 +468,9 @@ class Session(SessionRedirectMixin):
         :rtype: requests.Response
         """
         # 处理所有参数
+        if url_encode:
+            pass
+
         resp = self.send(method, url=url, proxies=proxies)
         return resp
 
@@ -577,10 +581,10 @@ class Session(SessionRedirectMixin):
         proxy = proxies.get(parsed.scheme)
         # 这里可以判断是否需要使用代理
         response = self.adapter.send(method, url=url, proxy=proxy)
-        return self.build_response(url,response)
+        return self.build_response(url, response)
 
-    def build_response(self,url,http_response):
-        return self.responseCls.from_http_response(url,http_response)
+    def build_response(self, url, http_response):
+        return self.responseCls.from_http_response(url, http_response)
 
     def merge_environment_settings(self, url, proxies, stream, verify, cert):
         """
