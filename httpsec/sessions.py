@@ -630,7 +630,7 @@ class Session(SessionRedirectMixin):
 
     def close(self):
         """Closes all adapters and as such the session"""
-        pass
+        self.adapter.close()
 
     def __getstate__(self):
         state = {attr: getattr(self, attr, None) for attr in self.__attrs__}

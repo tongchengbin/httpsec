@@ -1,15 +1,10 @@
 import collections
-import urllib
 from urllib.parse import urlparse
-
-import socks
-
 from httpsec.connection import HTTPConnection, HTTPSConnection, SOCKSConnection
 from httpsec.utils import RecentlyUsedContainer, parser_socket_proxy_opts
 import logging
 
 log = logging.getLogger(__file__)
-log.setLevel(logging.DEBUG)
 
 connection_classes_by_scheme = {"http": HTTPConnection, "https": HTTPSConnection, "socks": SOCKSConnection}
 
@@ -150,3 +145,10 @@ class HTTPAdapter(object):
         response = conn.getresponse()
         self.pools[pool_key_constructor] = conn
         return response
+
+    def close(self):
+        """
+        Close all pooled connections and disable the pool.
+        """
+        for con in self.pools.values():
+            con.close()
