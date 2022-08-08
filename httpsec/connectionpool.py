@@ -7,20 +7,14 @@ from urllib3.connection import BaseSSLError
 from urllib3.connectionpool import HTTPConnectionPool, HTTPSConnectionPool, ProtocolError, SSLError, CertificateError, \
     ProxyError, log, MaxRetryError
 from urllib3.exceptions import HostChangedError, EmptyPoolError, NewConnectionError
-from urllib3.util import parse_url
-from urllib3.util.proxy import connection_requires_http_tunnel
-from urllib3.util.request import set_file_position
+
 from socket import error as socket_error
-from socket import timeout as socket_time_error
-from httpsec.url import URL
-from httpsec.connection import HttpConnection, HttpsConnection
 from httpsec.response import Response
 
 _Default = object()
 
 
 class HttpConnectionPool(HTTPConnectionPool):
-    ConnectionCls = HttpConnection
     ResponseCls = Response
 
     def urlopen(
@@ -391,5 +385,4 @@ class HttpConnectionPool(HTTPConnectionPool):
 
 
 class HttpsConnectionPool(HttpConnectionPool, HTTPSConnectionPool):
-    ConnectionCls = HttpsConnection
     ResponseCls = Response

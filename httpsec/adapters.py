@@ -1,109 +1,66 @@
+import urllib
 from urllib.parse import urlparse
 
-from requests import adapters
-from requests.adapters import DEFAULT_POOLBLOCK, get_auth_from_url, proxy_from_url
-from requests.utils import select_proxy, urldefragauth
+from httpsec.connection import HTTPConnection, HTTPSConnection, SOCKSConnection
+from httpsec.utils import RecentlyUsedContainer
+import logging
 
-from httpsec.poolmanager import PoolManager, ProxyManager, SOCKSProxyManager
+log = logging.getLogger(__file__)
+log.setLevel(logging.DEBUG)
+
+connection_classes_by_scheme = {"http": HTTPConnection, "https": HTTPSConnection, "socks5": SOCKSConnection}
 
 
-class HTTPAdapter(adapters.HTTPAdapter):
-    def init_poolmanager(
-            self, connections, maxsize, block=DEFAULT_POOLBLOCK, **pool_kwargs
-    ):
-        """Initializes a urllib3 PoolManager.
+class HTTPAdapter(object):
+    def __init__(self):
+        num_pools = 4
+        self.pools = RecentlyUsedContainer(num_pools, dispose_func=lambda p: p.close())
+        self.num_connections = 0
+        self.connection_classes_by_scheme = connection_classes_by_scheme
 
-        This method should not be called from user code, and is only
-        exposed for use when subclassing the
-        :class:`HTTPAdapter <requests.adapters.HTTPAdapter>`.
-
-        :param connections: The number of urllib3 connection pools to cache.
-        :param maxsize: The maximum number of connections to save in the pool.
-        :param block: Block when no free connections are available.
-        :param pool_kwargs: Extra keyword arguments used to initialize the Pool Manager.
+    def _new_conn(self, parsed: urllib.parse.ParseResult,**kwargs) -> HTTPConnection:
         """
-        # save these values for pickling
-        self._pool_connections = connections
-        self._pool_maxsize = maxsize
-        self._pool_block = block
-
-        self.poolmanager = PoolManager(
-            num_pools=connections,
-            maxsize=maxsize,
-            block=block,
-            strict=True,
-            **pool_kwargs,
+        Return a fresh :class:`HTTPConnection`.
+        """
+        self.num_connections += 1
+        log.info(
+            "Starting new HTTP connection (%d): %s:%s",
+            self.num_connections,
+            parsed.hostname,
+            parsed.port or "80",
         )
+        connection_class = self.connection_classes_by_scheme.get(parllsed.scheme)
+        print(connection_class)
+        conn = connection_class(host=parsed.hostname, port=parsed.port,**kwargs)
+        return conn
 
-    def request_url(self, request, proxies):
-        """Obtain the url to use when making the final request.
-
-        If the message is being sent through a HTTP proxy, the full URL has to
-        be used. Otherwise, we should only use the path portion of the URL.
-
-        This should not be called from user code, and is only exposed for use
-        when subclassing the
-        :class:`HTTPAdapter <requests.adapters.HTTPAdapter>`.
-
-        :param request: The :class:`PreparedRequest <PreparedRequest>` being sent.
-        :param proxies: A dictionary of schemes or schemes and hosts to proxy URLs.
-        :rtype: str
-        """
-        proxy = select_proxy(request.url, proxies)
-        scheme = urlparse(request.url).scheme
-
-        is_proxied_http_request = proxy and scheme != "https"
-        using_socks_proxy = False
+    def get_conn(self, parsed, proxy):
+        kw = {}
         if proxy:
-            proxy_scheme = urlparse(proxy).scheme.lower()
-            using_socks_proxy = proxy_scheme.startswith("socks")
-        safe_url = None
-        if hasattr(request, 'safe_url'):
-            safe_url = request.safe_url
-            url = request.safe_url.request_uri
-        else:
-            url = request.path_url
-        if is_proxied_http_request and not using_socks_proxy:
-            if safe_url:
-                url = safe_url.url
+            proxy_parsed = urlparse(proxy)
+            if proxy_parsed.scheme.startswith("http"):
+                conn = self.pools.get(proxy_parsed)
             else:
-                url = urldefragauth(request.url)
-        return url
-
-    def proxy_manager_for(self, proxy, **proxy_kwargs):
-        """Return urllib3 ProxyManager for the given proxy.
-
-        This method should not be called from user code, and is only
-        exposed for use when subclassing the
-        :class:`HTTPAdapter <requests.adapters.HTTPAdapter>`.
-
-        :param proxy: The proxy to return a urllib3 ProxyManager for.
-        :param proxy_kwargs: Extra keyword arguments used to configure the Proxy Manager.
-        :returns: ProxyManager
-        :rtype: urllib3.ProxyManager
-        """
-        if proxy in self.proxy_manager:
-            manager = self.proxy_manager[proxy]
-        elif proxy.lower().startswith("socks"):
-            username, password = get_auth_from_url(proxy)
-            manager = self.proxy_manager[proxy] = SOCKSProxyManager(
-                proxy,
-                username=username,
-                password=password,
-                num_pools=self._pool_connections,
-                maxsize=self._pool_maxsize,
-                block=self._pool_block,
-                **proxy_kwargs,
-            )
+                # socks5 connect is real host
+                # todo 如果同一个链接 第一次没有使用代理  第二次设置代理也不会生效 这里需要添加proxy key
+                conn = self.pools.get(parsed)
+                kw["proxy"] = proxy
         else:
-            proxy_headers = self.proxy_headers(proxy)
-            manager = self.proxy_manager[proxy] = ProxyManager(
-                proxy,
-                proxy_headers=proxy_headers,
-                num_pools=self._pool_connections,
-                maxsize=self._pool_maxsize,
-                block=self._pool_block,
-                **proxy_kwargs,
-            )
+            conn = self.pools.get(parsed)
 
-        return manager
+        if conn is None:
+            conn = self._new_conn(parsed,**kw)
+        return conn
+
+    def send(self, method, url=None, proxy=None):
+        parsed = urlparse(url)
+        if proxy and urlparse(proxy).scheme.startswith("http"):
+            url = f"{parsed.path}?{parsed.query}#{parsed.fragment}"
+        conn = self.get_conn(parsed, proxy)
+        conn.request(method, url)
+        response = conn.getresponse()
+        print(response.read())
+        return response
+
+
+from urllib3.poolmanager import ProxyManager
