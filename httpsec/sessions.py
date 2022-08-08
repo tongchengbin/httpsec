@@ -10,6 +10,8 @@ from collections import OrderedDict
 from datetime import timedelta
 from urllib.parse import urlparse
 
+from requests.exceptions import InvalidSchema
+
 from httpsec.adapters import HTTPAdapter
 from httpsec.model import Response
 
@@ -623,29 +625,11 @@ class Session(SessionRedirectMixin):
 
         :rtype: requests.adapters.BaseAdapter
         """
-        for (prefix, adapter) in self.adapters.items():
-
-            if url.lower().startswith(prefix.lower()):
-                return adapter
-
-        # Nothing matches :-/
-        raise InvalidSchema(f"No connection adapters were found for {url!r}")
+        return self.adapter
 
     def close(self):
         """Closes all adapters and as such the session"""
-        for v in self.adapters.values():
-            v.close()
-
-    def mount(self, prefix, adapter):
-        """Registers a connection adapter to a prefix.
-
-        Adapters are sorted in descending order by prefix length.
-        """
-        self.adapters[prefix] = adapter
-        keys_to_move = [k for k in self.adapters if len(k) < len(prefix)]
-
-        for key in keys_to_move:
-            self.adapters[key] = self.adapters.pop(key)
+        pass
 
     def __getstate__(self):
         state = {attr: getattr(self, attr, None) for attr in self.__attrs__}
