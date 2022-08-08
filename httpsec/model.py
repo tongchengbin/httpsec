@@ -70,16 +70,21 @@ class Response(object):
         #: is a response.
         self.request = None
 
+        self._body = None
+        self._fp = None
+
     @classmethod
     def from_http_response(cls, url, http_response: HTTPResponse) -> "Response":
         response = cls()
         response.url = url
         response.status_code = http_response.status
-
         response.headers = OrderedDict(http_response.headers)
         response.cookies = {}
         response.raw = http_response
         response.reason = response.raw.reason
+        response._content = http_response.read()
+
+
         return response
 
     def iter_content(self, chunk_size=1, decode_unicode=False):
@@ -201,3 +206,36 @@ class Response(object):
             content = str(self.content, errors="replace")
 
         return content
+
+    def read(self, amt=None, decode_content=None, cache_content=False):
+        """
+        Similar to :meth:`http.client.HTTPResponse.read`, but with two additional
+        parameters: ``decode_content`` and ``cache_content``.
+
+        :param amt:
+            How much of the content to read. If specified, caching is skipped
+            because it doesn't make sense to cache partial content as the full
+            response.
+
+        :param decode_content:
+            If True, will attempt to decode the body based on the
+            'content-encoding' header.
+
+        :param cache_content:
+            If True, will save the returned data such that the same result is
+            returned despite of the state of the underlying file object. This
+            is useful if you want the ``.data`` property to continue working
+            after having ``.read()`` the file object. (Overridden if ``amt`` is
+            set.)
+        """
+        if self._fp is None:
+            return
+
+        fp_closed = getattr(self._fp, "closed", False)
+        if fp_closed:
+            data = b""
+        else:
+            data = self._fp.read()
+        self._content = data
+
+        return data

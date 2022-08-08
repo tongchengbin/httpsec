@@ -6,8 +6,19 @@ from httpsec import httpclient
 
 
 class HTTPConnection(httpclient.HTTPConnection):
-    pass
+    def __init__(self, *args, **kw):
+        # Pre-set source_address.
+        self.source_address = kw.get("source_address")
 
+        #: The socket options provided by the user. If no options are
+        #: provided, we use the default options.
+        # self.socket_options = kw.pop("socket_options", self.default_socket_options)
+
+        # Proxy options provided by the user.
+        # self.proxy = kw.pop("proxy", None)
+        # self.proxy_config = kw.pop("proxy_config", None)
+
+        httpclient.HTTPConnection.__init__(self, *args, **kw)
 
 
 class HTTPSConnection(httpclient.HTTPConnection):

@@ -474,7 +474,7 @@ class Session(SessionRedirectMixin):
             pass
         if isinstance(timeout, (int, float)):
             timeout = (timeout, timeout)
-        resp = self.send(method, url=url, proxies=proxies,timeout=timeout)
+        resp = self.send(method, url=url, proxies=proxies, timeout=timeout)
         return resp
 
     def get(self, url, **kwargs):
@@ -582,12 +582,16 @@ class Session(SessionRedirectMixin):
         # 解析URL
         parsed = urlparse(url)
         proxy = proxies.get(parsed.scheme)
+        if timeout is None:
+            timeout = (None, None)
+        elif isinstance(timeout, (int, float)):
+            timeout = (timeout, timeout)
+        elif not isinstance(timeout,tuple):
+            raise ValueError("Timeout must be tuple or int ")
         # 这里可以判断是否需要使用代理
-        response = self.adapter.send(method, url=url, proxy=proxy,timeout=timeout)
-        return self.build_response(url, response)
+        response = self.adapter.send(method, url=url, proxy=proxy, timeout=timeout)
+        return response
 
-    def build_response(self, url, http_response):
-        return self.responseCls.from_http_response(url, http_response)
 
     def merge_environment_settings(self, url, proxies, stream, verify, cert):
         """

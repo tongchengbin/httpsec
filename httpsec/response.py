@@ -38,6 +38,7 @@ class Response(HTTPResponse):
         self.reason = reason
         self.auto_close = auto_close
         self.request_url = request_url
+        self._body = None
 
     @property
     def text(self):
