@@ -11,6 +11,7 @@ from datetime import timedelta
 from urllib.parse import urlparse
 
 from httpsec.adapters import HTTPAdapter
+from httpsec.model import Response
 
 DEFAULT_REDIRECT_LIMIT = 3
 
@@ -327,7 +328,7 @@ class Session(SessionRedirectMixin):
       ...     s.get('https://httpbin.org/get')
       <Response [200]>
     """
-
+    responseCls = Response
     __attrs__ = [
         "headers",
         "cookies",
@@ -575,8 +576,11 @@ class Session(SessionRedirectMixin):
         parsed = urlparse(url)
         proxy = proxies.get(parsed.scheme)
         # 这里可以判断是否需要使用代理
-        response = self.adapter.send(method, url=url,proxy=proxy)
-        return response
+        response = self.adapter.send(method, url=url, proxy=proxy)
+        return self.build_response(url,response)
+
+    def build_response(self,url,http_response):
+        return self.responseCls.from_http_response(url,http_response)
 
     def merge_environment_settings(self, url, proxies, stream, verify, cert):
         """
