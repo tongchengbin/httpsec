@@ -2,6 +2,9 @@ import typing
 from collections.abc import MutableMapping
 from multiprocessing import RLock
 
+import socks
+from urllib3.util import parse_url
+
 _Null = object()
 
 
@@ -144,3 +147,36 @@ def merge_setting(request_setting: typing.Mapping, session_setting):
         del merged_setting[key]
 
     return merged_setting
+
+
+def parser_socket_proxy_opts(proxy_url):
+    parsed = parse_url(proxy_url)
+    username = password = None
+    if parsed.auth is not None:
+        split = parsed.auth.split(":")
+        if len(split) == 2:
+            username, password = split
+    if parsed.scheme == "socks5":
+        socks_version = socks.PROXY_TYPE_SOCKS5
+        rDNS = False
+    elif parsed.scheme == "socks5h":
+        socks_version = socks.PROXY_TYPE_SOCKS5
+        rDNS = True
+    elif parsed.scheme == "socks4":
+        socks_version = socks.PROXY_TYPE_SOCKS4
+        rDNS = False
+    elif parsed.scheme == "socks4a":
+        socks_version = socks.PROXY_TYPE_SOCKS4
+        rDNS = True
+    else:
+        raise ValueError("Unable to determine SOCKS version from %s" % proxy_url)
+
+    opts = {
+        "socks_version": socks_version,
+        "proxy_host": parsed.host,
+        "proxy_port": parsed.port,
+        "username": username,
+        "password": password,
+        "rDNS": rDNS,
+    }
+    return opts

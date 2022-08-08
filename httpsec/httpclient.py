@@ -600,6 +600,7 @@ class HTTPConnection:
     def __init__(self, host, port=None, timeout=getattr(socket, "_GLOBAL_DEFAULT_TIMEOUT"),
                  source_address=None, blocksize=8192):
         self.timeout = timeout
+        self.read_timeout = None
         self.source_address = source_address
         self.blocksize = blocksize
         self.sock = None
@@ -941,7 +942,6 @@ class HTTPConnection:
         # ASCII also helps prevent CVE-2019-9740.
         return request.encode('ascii')
 
-
     def putheader(self, header, *values):
         """Send a request header line to the server.
 
@@ -1077,8 +1077,8 @@ class HTTPConnection:
             self.close()
             raise
         except Exception as e:
-            print(e)
             self.close()
+            raise e
         assert response.will_close != _UNKNOWN
         self.__state = _CS_IDLE
 

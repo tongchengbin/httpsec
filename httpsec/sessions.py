@@ -472,8 +472,9 @@ class Session(SessionRedirectMixin):
         # 处理所有参数
         if url_encode:
             pass
-
-        resp = self.send(method, url=url, proxies=proxies)
+        if isinstance(timeout, (int, float)):
+            timeout = (timeout, timeout)
+        resp = self.send(method, url=url, proxies=proxies,timeout=timeout)
         return resp
 
     def get(self, url, **kwargs):
@@ -582,7 +583,7 @@ class Session(SessionRedirectMixin):
         parsed = urlparse(url)
         proxy = proxies.get(parsed.scheme)
         # 这里可以判断是否需要使用代理
-        response = self.adapter.send(method, url=url, proxy=proxy)
+        response = self.adapter.send(method, url=url, proxy=proxy,timeout=timeout)
         return self.build_response(url, response)
 
     def build_response(self, url, http_response):
